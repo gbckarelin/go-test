@@ -12,6 +12,6 @@ func main() {
 	http.HandleFunc("/status/", handleStatus)
 	http.HandleFunc("/result/", handleRequest)
 
-	fmt.Println("Server start 8080")
-	http.ListenAndServe(":8080", nil)
+	fmt.Println("Server start 8000")
+	http.ListenAndServe(":8000", nil)
 }
