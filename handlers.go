@@ -14,6 +14,11 @@ type TaskStatus struct {
 	Result string `json:"result,omitempty"`
 }
 
+type User struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 func handleTask(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -62,4 +67,55 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"result": task.Result})
+}
+
+func handleRegister(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var user User
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		http.Error(w, "Bad request", http.StatusBadRequest)
+		return
+	}
+
+	if user.Username == "" || user.Password == "" {
+		http.Error(w, "Nill Username or password", http.StatusBadRequest)
+		return
+	}
+
+	if _, exists := users[user.Username]; exists {
+		http.Error(w, "User already registred", http.StatusConflict)
+		return
+	}
+
+	users[user.Username] = &user
+	w.WriteHeader(http.StatusCreated)
+
+}
+
+func handleLogin(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var login User
+	if err := json.NewDecoder(r.Body).Decode(&login); err != nil {
+		http.Error(w, "Bad request", http.StatusBadRequest)
+		return
+	}
+	storedUser, exists := users[login.Username]
+	if !exists || storedUser.Password != login.Password {
+		http.Error(w, "Invalid username or password", http.StatusUnauthorized)
+		return
+	}
+
+	token := uuid.New().String()
+	tokens[token] = login.Username
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"token": token})
+
 }
