@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 
@@ -18,7 +20,11 @@ import (
 // @Router /task [post]
 func handleTask(w http.ResponseWriter, r *http.Request) {
 
-	username := "loh"
+	username, auth := r.Context().Value("username").(string)
+	if !auth || username == "" {
+		http.Error(w, "Unnauthorized", http.StatusUnauthorized)
+		return
+	}
 
 	taskID := store.CreateTask(username)
 	w.Header().Set("Content-Type", "application/json")
@@ -35,6 +41,11 @@ func handleTask(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {string} string "Task not found"
 // @Router /status/{taskID} [get]
 func handleStatus(w http.ResponseWriter, r *http.Request) {
+	_, auth := r.Context().Value("username").(string)
+	if !auth {
+		http.Error(w, "Unnauthorized", http.StatusUnauthorized)
+		return
+	}
 	taskID := chi.URLParam(r, "taskID")
 	status, err := store.GetTaskStatus(taskID)
 	if err != nil {
@@ -56,6 +67,12 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 // @Failure 202 {string} string "Task not ready"
 // @Router /result/{taskID} [get]
 func handleRequest(w http.ResponseWriter, r *http.Request) {
+	_, auth := r.Context().Value("username").(string)
+	if !auth {
+		http.Error(w, "Unnauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	taskID := chi.URLParam(r, "taskID")
 	result, err := store.GetTaskResult(taskID)
 
@@ -123,4 +140,31 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"token": token})
 
+}
+
+func auth(n http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authHead := r.Header.Get("Authorization")
+		if authHead == "" {
+			http.Error(w, "Unnauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		splits := strings.Split(authHead, " ")
+		if splits[0] != "Bearer" || len(splits) != 2 {
+			http.Error(w, "Unnauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		token := splits[1]
+		username, valid := store.ValidateToken(token)
+		if !valid {
+			http.Error(w, "Unnauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		part := r.Context()
+		part = context.WithValue(part, "username", username)
+		n.ServeHTTP(w, r.WithContext(part))
+	})
 }

@@ -35,9 +35,9 @@ func main() {
 	r.Post("/register", handleRegister)
 	r.Post("/login", handleLogin)
 	r.Post("/task", handleTask)
-	r.Get("/status/{taskID}", handleStatus)
-	r.Get("/result/{taskID}", handleRequest)
-	r.Get("/swagger/*", httpSwagger.WrapHandler)
+	r.With(auth).Get("/status/{taskID}", handleStatus)
+	r.With(auth).Get("/result/{taskID}", handleRequest)
+	r.With(auth).Get("/swagger/*", httpSwagger.WrapHandler)
 	fmt.Println("Server start 8000")
 	http.ListenAndServe(":8000", r)
 }

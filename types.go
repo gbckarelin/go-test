@@ -8,9 +8,15 @@ import (
 )
 
 type Storage struct {
-	users  map[string]*User
-	tasks  map[string]*TaskStatus
-	tokens map[string]string
+	users    map[string]*User
+	sessions map[string]*Session
+	tasks    map[string]*TaskStatus
+	tokens   map[string]string
+}
+
+type Session struct {
+	UserID    string `json:"user_id"`
+	SessionID string `json:"session_id"`
 }
 
 type TaskStatus struct {
@@ -19,39 +25,52 @@ type TaskStatus struct {
 }
 
 type User struct {
+	ID       string `json:"id"`
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
 func NewStorage() *Storage {
 	return &Storage{
-		users:  make(map[string]*User),
-		tasks:  make(map[string]*TaskStatus),
-		tokens: make(map[string]string),
+		users:    make(map[string]*User),
+		sessions: make(map[string]*Session),
+		tasks:    make(map[string]*TaskStatus),
+		tokens:   make(map[string]string),
 	}
 }
 
-//регистрация пользователя
+// регистрация пользователя
 func (s *Storage) RegisterUser(username, password string) error {
 	if _, exists := s.users[username]; exists {
 		return fmt.Errorf("user already exists")
 	}
-	s.users[username] = &User{Username: username, Password: password}
+	id := uuid.New().String()
+	s.users[username] = &User{ID: id, Username: username, Password: password}
 	return nil
 }
 
-//аутентификация
+// аутентификация
 func (s *Storage) AuthenticateUser(username, password string) (string, error) {
 	user, exists := s.users[username]
 	if !exists || user.Password != password {
 		return "", fmt.Errorf("invalid username or password")
 	}
 	token := uuid.New().String()
+	session := &Session{
+		UserID:    user.ID,
+		SessionID: token,
+	}
+	s.sessions[token] = session
 	s.tokens[token] = username
 	return token, nil
 }
 
-//получение Id таски
+func (s *Storage) ValidateToken(token string) (string, bool) {
+	username, exists := s.tokens[token]
+	return username, exists
+}
+
+// получение Id таски
 func (s *Storage) CreateTask(username string) string {
 	taskID := uuid.New().String()
 	s.tasks[taskID] = &TaskStatus{Status: "in_progress"}
@@ -73,7 +92,7 @@ func (s *Storage) GetTaskStatus(taskID string) (*TaskStatus, error) {
 	return task, nil
 }
 
-//получение результата таски
+// получение результата таски
 func (s *Storage) GetTaskResult(taskID string) (string, error) {
 	task, exists := s.tasks[taskID]
 	if !exists {
