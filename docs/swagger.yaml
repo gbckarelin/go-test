@@ -1,0 +1,146 @@
+definitions:
+  main.TaskStatus:
+    properties:
+      result:
+        type: string
+      status:
+        type: string
+    type: object
+  main.User:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and return a JWT token
+      parameters:
+      - description: User data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/main.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: JWT token
+          schema:
+            type: string
+        "400":
+          description: Bad request
+          schema:
+            type: string
+        "401":
+          description: Invalid username or password
+          schema:
+            type: string
+      summary: Login a user
+      tags:
+      - auth
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user with a username and password
+      parameters:
+      - description: User data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/main.User'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User registered successfully
+          schema:
+            type: string
+        "400":
+          description: Bad request
+          schema:
+            type: string
+        "409":
+          description: User already exists
+          schema:
+            type: string
+      summary: Register a new user
+      tags:
+      - auth
+  /result/{taskID}:
+    get:
+      description: Get the result of a specific task by its ID
+      parameters:
+      - description: Task ID
+        in: path
+        name: taskID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Task result
+          schema:
+            type: string
+        "202":
+          description: Task not ready
+          schema:
+            type: string
+        "404":
+          description: Task not found
+          schema:
+            type: string
+      summary: Get task result
+      tags:
+      - tasks
+  /status/{taskID}:
+    get:
+      description: Get the status of a specific task by its ID
+      parameters:
+      - description: Task ID
+        in: path
+        name: taskID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Task status
+          schema:
+            $ref: '#/definitions/main.TaskStatus'
+        "404":
+          description: Task not found
+          schema:
+            type: string
+      summary: Get task status
+      tags:
+      - tasks
+  /task:
+    post:
+      description: Create a new task for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Task ID
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Create a new task
+      tags:
+      - tasks
+swagger: "2.0"
