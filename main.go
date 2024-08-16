@@ -34,7 +34,7 @@ func main() {
 
 	r.Post("/register", handleRegister)
 	r.Post("/login", handleLogin)
-	r.Post("/task", handleTask)
+	r.With(auth).Post("/task", handleTask)
 	r.With(auth).Get("/status/{taskID}", handleStatus)
 	r.With(auth).Get("/result/{taskID}", handleRequest)
 	r.With(auth).Get("/swagger/*", httpSwagger.WrapHandler)

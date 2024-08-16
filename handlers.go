@@ -20,11 +20,13 @@ import (
 // @Router /task [post]
 func handleTask(w http.ResponseWriter, r *http.Request) {
 
-	username, auth := r.Context().Value("username").(string)
-	if !auth || username == "" {
-		http.Error(w, "Unnauthorized", http.StatusUnauthorized)
-		return
-	}
+	username := "loh"
+
+	// username, auth := r.Context().Value("username").(string)
+	// if !auth || username == "" {
+	// 	http.Error(w, "Unnauthorized", http.StatusUnauthorized)
+	// 	return
+	// }
 
 	taskID := store.CreateTask(username)
 	w.Header().Set("Content-Type", "application/json")
@@ -41,11 +43,7 @@ func handleTask(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {string} string "Task not found"
 // @Router /status/{taskID} [get]
 func handleStatus(w http.ResponseWriter, r *http.Request) {
-	_, auth := r.Context().Value("username").(string)
-	if !auth {
-		http.Error(w, "Unnauthorized", http.StatusUnauthorized)
-		return
-	}
+
 	taskID := chi.URLParam(r, "taskID")
 	status, err := store.GetTaskStatus(taskID)
 	if err != nil {
@@ -67,11 +65,6 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 // @Failure 202 {string} string "Task not ready"
 // @Router /result/{taskID} [get]
 func handleRequest(w http.ResponseWriter, r *http.Request) {
-	_, auth := r.Context().Value("username").(string)
-	if !auth {
-		http.Error(w, "Unnauthorized", http.StatusUnauthorized)
-		return
-	}
 
 	taskID := chi.URLParam(r, "taskID")
 	result, err := store.GetTaskResult(taskID)
