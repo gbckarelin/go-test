@@ -1,4 +1,3 @@
-# Этап 1: Сборка приложения
 FROM golang:latest
 
 COPY ./ ./

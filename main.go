@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	_ "yanego/docs"
+	
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -28,6 +29,12 @@ var store = NewStorage()
 // @host localhost:8000
 // @BasePath /
 func main() {
+
+	StartConsumer()
+	StartServer()
+}
+
+func StartServer() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)

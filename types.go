@@ -21,7 +21,7 @@ type Session struct {
 
 type TaskStatus struct {
 	Status string `json:"status"`
-	Result string `json:"result,omitempty"`
+	Result string `json:"result"`
 }
 
 type User struct {
@@ -102,4 +102,10 @@ func (s *Storage) GetTaskResult(taskID string) (string, error) {
 		return "", fmt.Errorf("task not ready")
 	}
 	return task.Result, nil
+}
+
+func (s *Storage) doTask(taskID string) {
+	time.Sleep(5 * time.Second)
+	s.tasks[taskID].Status = "ready"
+	s.tasks[taskID].Result = "mysor"
 }
